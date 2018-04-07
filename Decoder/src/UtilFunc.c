@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include "UtilFuncs.h"
 
+// Defines
+#define COEFF_COUNT 64
+
+// Global variables
+uint16_t N;
+uint8_t* Header; //of size N, populated in ExtractDescriptor. It holds the amount of bits used to store each coefficient
+
 //***************************************************************************
 //* Function Name:	ReadFileInBinaryMode
 //*
@@ -49,3 +56,37 @@ char* ReadFileInBinaryMode(char* FileName, long* BufferSize)
 	fclose(FilePtr);
 	return BufferPtr;
 }
+
+//***************************************************************************
+//* Function Name:	ExtractDescriptor
+//*
+//* Purpose:		Reads the byte data buffer and extracts the header descriptor
+//*
+//* Parameters:		File - IN - A data file pointer extracted with ReadFileInBinaryMode.
+//*
+//* Returns:		void
+//*
+//***************************************************************************
+void ExtractDescriptor(char* File)
+{
+	uint16_t headerIdx = 0;
+	N = File[0];
+	N <<= 8;
+	N |= File[1];
+	int limit = N + 2;
+	uint8_t byte;
+	
+	Header = (uint8_t*) malloc(COEFF_COUNT * N * sizeof(uint8_t));
+	
+	for(int i = 2; i < limit; i++)
+	{
+		byte = File[i];
+		Header[headerIdx]   = (byte & 0xC0) >> 6;
+		Header[headerIdx+1] = (byte & 0x30) >> 4;
+		Header[headerIdx+2] = (byte & 0xC) >> 2;
+		Header[headerIdx+3] = (byte & 0x3);
+		headerIdx += 4;
+	}
+}
+
+

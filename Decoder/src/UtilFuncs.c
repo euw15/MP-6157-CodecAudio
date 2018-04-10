@@ -12,7 +12,7 @@
 // Global variables
 uint16_t N = 0;
 unsigned int DataSize = 0;
-uint8_t** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block
+uint8_t** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block [N, COEFF_COUNT]
 short bitmask[4] = {0x01, 0x03, 0x0F, 0xFF}; //mask for requested amount of bits (1, 2, 4, 8)
 
 
@@ -75,9 +75,10 @@ char* ReadFileInBinaryMode(char* FileName, long* BufferSize)
 //* Parameters:		File - IN - A data file pointer extracted with ReadFileInBinaryMode.
 //*
 //* Returns:		A void of everlasting darkness my old friend
+//*                 -.- a pointer to Header[][]
 //*
 //***************************************************************************
-void ExtractDescriptor(unsigned char* File)
+uint8_t** ExtractDescriptor(unsigned char* File)
 {
 	int i = 0, j = 0;
 	short limit = 0;
@@ -87,22 +88,23 @@ void ExtractDescriptor(unsigned char* File)
 	N = File[0];
 	N <<= 8;
 	N |= File[1];
-	limit = N + 2;
+	limit = (N * BYTES_PER_HEADER) + 2;
 	
 	Header = (uint8_t**) malloc(N * sizeof(uint8_t*));
 	
-	for(i = 2, j = 0, DataSize = 0; i < limit; i++, j++)
+	for(i = 2, j = 0, DataSize = 0; i < limit && j < N; j++)
 	{
 		Header[j] = (uint8_t*) malloc(COEFF_COUNT * sizeof(uint8_t));
-		byte = File[i];
-		for(headerIdx = 0; headerIdx < BYTES_PER_HEADER; headerIdx+=4)
+		for(headerIdx = 0; headerIdx < COEFF_COUNT; headerIdx+=4, i++)
 		{
-			DataSize += (Header[j][headerIdx]   = ((byte & 0xC0) >> 6) );
-			DataSize += (Header[j][headerIdx+1] = ((byte & 0x30) >> 4) );
-			DataSize += (Header[j][headerIdx+2] = ((byte & 0xC) >> 2) );
-			DataSize += (Header[j][headerIdx+3] = (byte & 0x3) );
+		    byte = File[i];
+			DataSize += bitmask[(Header[j][headerIdx]   = ((byte & 0xC0) >> 6) )];
+			DataSize += bitmask[(Header[j][headerIdx+1] = ((byte & 0x30) >> 4) )];
+			DataSize += bitmask[(Header[j][headerIdx+2] = ((byte & 0xC) >> 2) )];
+			DataSize += bitmask[(Header[j][headerIdx+3] = (byte & 0x3) )];
 		}
 	}
+    return Header;
 }
 
 //***************************************************************************
@@ -139,7 +141,8 @@ int*** ExtractCoeffs(unsigned char* File)
 	for(dataIdx = dataBaseIdx, blockIdx = 0; blockIdx < N; blockIdx++)
 	{
 		Coeffs[blockIdx] = (int**) malloc(2 * sizeof(int*));
-		Coeffs[blockIdx][0] = (int*) malloc(COEFF_COUNT * sizeof(int));
+		Coeffs[blockIdx][0] = (int*) malloc(ACTUAL_COEFFS * sizeof(int));
+		Coeffs[blockIdx][1] = (int*) malloc(ACTUAL_COEFFS * sizeof(int));
 
         //8 is MSB
 		bitIdx = 8;
@@ -182,8 +185,9 @@ int*** ExtractCoeffs(unsigned char* File)
 			}
 			else//img
 			{
-				Coeffs[blockIdx][1][cftIdx] = ((coeff - 128) << 13);
+				Coeffs[blockIdx][1][cftIdx - ACTUAL_COEFFS] = ((coeff - 128) << 13);
 			}
 		}
 	}
+    return Coeffs;
 }

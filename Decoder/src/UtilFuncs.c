@@ -129,16 +129,16 @@ int*** ExtractCoeffs(unsigned char* File)
 	short bitIdx = 0, bitShft = 0, reqBits = 0;//vars for byte processing
     
     //move pointer to start of compressed data, 2 bytes for N, and N * 16 to skip over headers
-	unsigned char* Data = File + (N*BYTES_PER_HEADER + 2);
+	unsigned char* Data = File + ((N*BYTES_PER_HEADER) + 2);
 
 	//Data section size in bits was extracted on the header parser, divide by 8 to get the index count for Data
-	const unsigned int dataBaseIdx = DataSize >> 3;
+	const unsigned int dataLastIdx = DataSize >> 3;
 	
 	// 3 dimensional array for storing complex coeffs
 	int*** Coeffs = (int***) malloc(N * sizeof(int**));
 
 	//loop through each audio block (8ms)
-	for(dataIdx = dataBaseIdx, blockIdx = 0; blockIdx < N; blockIdx++)
+	for(dataIdx = 0, blockIdx = 0; blockIdx < N; blockIdx++, dataIdx++)
 	{
 		Coeffs[blockIdx] = (int**) malloc(2 * sizeof(int*));
 		Coeffs[blockIdx][0] = (int*) malloc(ACTUAL_COEFFS * sizeof(int));

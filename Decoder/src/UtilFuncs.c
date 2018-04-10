@@ -13,7 +13,7 @@
 uint16_t N = 0;
 unsigned int DataSize = 0;
 uint8_t** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block
-short bitmask[4] = {0x1, 0x3, 0xF, 0xFF}; //mask for requested amount of bits (1, 2, 4, 8)
+short bitmask[4] = {0x01, 0x03, 0x0F, 0xFF}; //mask for requested amount of bits (1, 2, 4, 8)
 
 
 //***************************************************************************
@@ -67,14 +67,17 @@ char* ReadFileInBinaryMode(char* FileName, long* BufferSize)
 //***************************************************************************
 //* Function Name:	ExtractDescriptor
 //*
-//* Purpose:		Reads the byte data buffer and extracts the header descriptor
+//* Purpose:		Reads the byte data buffer and extracts the header descriptor,
+//*                     which is stored in global variable 
+//*                     Header[N : Audio block count][COEFF_COUNT], describing the amount
+//*                     of bits used to store each coefficient
 //*
 //* Parameters:		File - IN - A data file pointer extracted with ReadFileInBinaryMode.
 //*
 //* Returns:		A void of everlasting darkness my old friend
 //*
 //***************************************************************************
-void ExtractDescriptor(char* File)
+void ExtractDescriptor(unsigned char* File)
 {
 	int i = 0, j = 0;
 	short limit = 0;
@@ -113,64 +116,73 @@ void ExtractDescriptor(char* File)
 //* Parameters:		File - IN - A data file pointer extracted with ReadFileInBinaryMode.
 //*
 //* Returns:		FFT Coefficients read into a 3 dimensional array of the form
-//*					
+//*					Coeff[N : (Audio block count)] [2: (real, img)] [COEFF_COUNT]
 //*
 //***************************************************************************
-int*** ExtractCoeffs(char* File)
+int*** ExtractCoeffs(unsigned char* File)
 {   //header, block idx, real coeff idx, imaginary coeff idx, coeff number, data idx
-	int h = 0, bi = 0, ci = 0, cii = 0, coeff = 0, di = 0;
-	short trailing = 0, bitIdx = 0, bitSwch = 0, reqBits = 0;//vars for word processing
-	int limit = COEFF_COUNT * N;
-	char* Data = File + (N*BYTES_PER_HEADER + 2);//move pointer to start of compressed data, 2 bytes for N, and N * 16 to skip over headers
+	int cftIdx = 0, blockIdx = 0, ci = 0, cii = 0, coeff = 0, dataIdx = 0;
+    
+    //idx for scanning each byte, bitwise shift amount, requested amount of bits
+	short bitIdx = 0, bitShft = 0, reqBits = 0;//vars for byte processing
+    
+    //move pointer to start of compressed data, 2 bytes for N, and N * 16 to skip over headers
+	unsigned char* Data = File + (N*BYTES_PER_HEADER + 2);
 
 	//Data section size in bits was extracted on the header parser, divide by 8 to get the index count for Data
-	const unsigned int dataIdx = DataSize >> 3;
+	const unsigned int dataBaseIdx = DataSize >> 3;
 	
-	// 2 dimensions array for storing complex coeffs, succesive elements starting with idx 0 are paired (real numbers and img numbers)
+	// 3 dimensional array for storing complex coeffs
 	int*** Coeffs = (int***) malloc(N * sizeof(int**));
-	
-	for(di = dataIdx, bi = 0; bi < N; bi++)//loop through each audio block (8ms)
+
+	//loop through each audio block (8ms)
+	for(dataIdx = dataBaseIdx, blockIdx = 0; blockIdx < N; blockIdx++)
 	{
-		Coeffs[bi] = (int**) malloc(2 * sizeof(int*)); //2: real and img
-		Coeffs[bi][0] = (int*) malloc(COEFF_COUNT * sizeof(int));
+		Coeffs[blockIdx] = (int**) malloc(2 * sizeof(int*));
+		Coeffs[blockIdx][0] = (int*) malloc(COEFF_COUNT * sizeof(int));
 
+        //8 is MSB
 		bitIdx = 8;
-		//Header[N][64]
-		for(h = 0; h < COEFF_COUNT; h++)//loop through this block's header
-		{
-			reqBits = Header[bi][h];
-			bitSwch = bitIdx - reqBits;
 
-			if(bitSwch == 0)//last fetch from current Data byte
+        //loop through this block's header
+		for(cftIdx = 0; cftIdx < COEFF_COUNT; cftIdx++)
+		{   
+            // 0->1 bit, 1->2 bits, 2->4 bits, 3->8 bits
+			reqBits = Header[blockIdx][cftIdx] == 0 ? 1 : ( 2 << (Header[blockIdx][cftIdx] - 1) );
+
+            //amount of bits to shift so to place what we want where we want it
+			bitShft = bitIdx - reqBits;
+
+			if(bitShft == 0)//last fetch from current Data byte
 			{
 				//pull entire byte, requested bits are obtained with the mask applied after these else-ifs
-				coeff = Data[di];
-				++di;
+				coeff = Data[dataIdx];
+				++dataIdx;
 				bitIdx = 8;
 			}
-			else if(bitSwch < 0)//trailing bits, supports any anount of trailing between 1-8
+			else if(bitShft < 0)//trailing bits, supports any amount of trailing between 1-8
 			{
-				//pull remaining bits, leave space for remaining bits stored in next Data byte
-				coeff = (Data[di] << (reqBits - bitIdx));
-				bitIdx = 8 - (reqBits - bitIdx);
-				++di;
-				coeff |= Data[di] >> bitIdx;
+				//pull remaining bits, leave space for additional bits stored in next Data byte
+				coeff = (Data[dataIdx] << (-bitShft));//i.e reqBits - bitIdx
+				bitIdx = 8 - (-bitShft);
+				++dataIdx;
+				coeff |= Data[dataIdx] >> bitIdx;
 			}
-			else//fetch normally
+			else//bitShift > 0, fetch normally
 			{
-				coeff = Data[di] >> bitSwch;
+				coeff = Data[dataIdx] >> bitShft;
 				bitIdx -= reqBits;
 			}
 
-			coeff &= bitmask[reqBits];
+			coeff &= bitmask[ Header[blockIdx][cftIdx] ];
 
-			if(h < ACTUAL_COEFFS)//real
+			if(cftIdx < ACTUAL_COEFFS)//real
 			{
-				Coeffs[bi][0][h] = coeff;
+				Coeffs[blockIdx][0][cftIdx] = ((coeff - 128) << 13);//offset and scale back
 			}
 			else//img
 			{
-				Coeffs[bi][1][h] = coeff;
+				Coeffs[blockIdx][1][cftIdx] = ((coeff - 128) << 13);
 			}
 		}
 	}

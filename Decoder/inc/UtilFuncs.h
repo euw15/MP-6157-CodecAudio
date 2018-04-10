@@ -11,8 +11,8 @@
 
 char* ReadFileInBinaryMode(char* FileName, long* BufferSize);
 
-void ExtractDescriptor(char* File);
+void ExtractDescriptor(unsigned char* File);
 
-int*** ExtractCoeffs(char* File);
+int*** ExtractCoeffs(unsigned char* File);
 
 #endif

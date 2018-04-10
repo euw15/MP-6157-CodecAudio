@@ -112,7 +112,8 @@ void ExtractDescriptor(char* File)
 //*
 //* Parameters:		File - IN - A data file pointer extracted with ReadFileInBinaryMode.
 //*
-//* Returns:		Index of first data entry
+//* Returns:		FFT Coefficients read into a 3 dimensional array of the form
+//*					
 //*
 //***************************************************************************
 int*** ExtractCoeffs(char* File)

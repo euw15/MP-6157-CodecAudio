@@ -5,8 +5,8 @@
 
 /*typedef struct CplxCoeff
 {
-	uint8_t real;
-	uint8_t img;
+    uint8_t real;
+    uint8_t img;
 } CplxCoeff;*/
 
 char* ReadFileInBinaryMode(char* FileName, long* BufferSize);

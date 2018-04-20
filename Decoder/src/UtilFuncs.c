@@ -91,9 +91,9 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	uint16_t headerIdx = 0;
 	uint8_t byte;
 	N = 0;
-	N = File[0];
+	N = File[1];
 	N <<= 8;
-	N |= File[1];
+	N |= File[0];
 	limit = (N * BYTES_PER_HEADER) + 2;
 	
 	Header = (uint8_t**) malloc(N * sizeof(uint8_t*));

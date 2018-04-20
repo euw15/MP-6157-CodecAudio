@@ -1,4 +1,4 @@
-//***************************************************************************
+﻿//***************************************************************************
 //* FileName:       UtilFuncs.c
 //*
 //* Description:    Implementation of the utility functions that read
@@ -124,12 +124,12 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 //* Parameters:		File - IN - A data file pointer extracted with ReadFileInBinaryMode.
 //*
 //* Returns:		FFT Coefficients read into a 3 dimensional array of the form
-//*					Coeff[N : (Audio block count)] [2: (real, img)] [COEFF_COUNT]
+//*					Coeff[N : (Audio block count)] [2: (real, img)] [ACTUAL_COEFFS]
 //*
 //***************************************************************************
 int*** ExtractCoeffs(unsigned char* File)
-{   //header, block idx, real coeff idx, imaginary coeff idx, coeff number, data idx
-	int cftIdx = 0, blockIdx = 0, ci = 0, cii = 0, coeff = 0, dataIdx = 0;
+{   //header, block idx, coeff number, data idx
+	int cftIdx = 0, blockIdx = 0, coeff = 0, dataIdx = 0;
     
     //idx for scanning each byte, bitwise shift amount, requested amount of bits
 	short bitIdx = 0, bitShft = 0, reqBits = 0;//vars for byte processing
@@ -196,4 +196,48 @@ int*** ExtractCoeffs(unsigned char* File)
 		}
 	}
     return Coeffs;
+}
+
+//***************************************************************************
+//* Function Name:	RetrieveIFFTCoeffs
+//*
+//* Purpose:		Provides the mirrored coeffs to send into the IFFT
+//*
+//* Parameters:		coeffs  - IN - FFT Coefficients read into a 3 dimensional array of the form
+//*					    Coeff[N : (Audio block count)] [2: (real, img)] [ACTUAL_COEFFS].
+//*
+//* Returns:		actualCoeffs - expanded coefficients of the form
+//*                     Coeff[N : (Audio block count)] [2: (real, img)] [COEFF_COUNT].
+//*
+//***************************************************************************
+int*** RetrieveIFFTCoeffs(int*** coeffs)
+{
+    int cftIdx = 0, blockIdx = 0, coeff = 0, invIdx = 0;
+
+    // 3 dimensional array for storing complex coeffs
+    int*** actualCoeffs = (int***)malloc(N * sizeof(int**));
+
+    //loop through each audio block (8ms)
+    for (blockIdx = 0; blockIdx < N; blockIdx++)
+    {
+        actualCoeffs[blockIdx] = (int**)malloc(2 * sizeof(int*));
+        actualCoeffs[blockIdx][0] = (int*)malloc(COEFF_COUNT * sizeof(int));
+        actualCoeffs[blockIdx][1] = (int*)malloc(COEFF_COUNT * sizeof(int));
+
+        //1st and 32nd coeffs do not have mirror, nor imaginary part
+        actualCoeffs[blockIdx][0][0] = coeffs[blockIdx][0][0];
+        actualCoeffs[blockIdx][0][32] = coeffs[blockIdx][1][0];//32nd real coeff(pivot) stored in 1st img, since 1st img is known to be 0
+
+        actualCoeffs[blockIdx][1][0] = 0;//first img coeff is 0
+        actualCoeffs[blockIdx][1][32] = 0;
+
+        //loop through each coeff
+        for (cftIdx = 1, invIdx = COEFF_COUNT - 1; cftIdx < ACTUAL_COEFFS; cftIdx++, invIdx--)
+        {
+            actualCoeffs[blockIdx][0][cftIdx] = actualCoeffs[blockIdx][0][invIdx] = coeffs[blockIdx][0][cftIdx];
+            
+            actualCoeffs[blockIdx][1][cftIdx] = actualCoeffs[blockIdx][1][invIdx] = coeffs[blockIdx][1][cftIdx];
+        }
+    }
+    return actualCoeffs;
 }

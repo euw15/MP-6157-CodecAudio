@@ -17,4 +17,6 @@ uint8_t** ExtractDescriptor(unsigned char* File);
 
 int*** ExtractCoeffs(unsigned char* File);
 
+int*** RetrieveIFFTCoeffs(int*** coeffs);
+
 #endif

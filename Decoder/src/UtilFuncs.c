@@ -1,3 +1,11 @@
+//***************************************************************************
+//* FileName:       UtilFuncs.c
+//*
+//* Description:    Implementation of the utility functions that read
+//*                 codified audio files to obtain its coefficients.
+//*
+//***************************************************************************
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "UtilFuncs.h"
@@ -14,53 +22,52 @@ unsigned int DataSize = 0;
 uint8_t** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block [N, COEFF_COUNT]
 short bitmask[4] = {0x01, 0x03, 0x0F, 0xFF}; //mask for requested amount of bits (1, 2, 4, 8)
 
-
 //***************************************************************************
-//* Function Name:	ReadFileInBinaryMode
+//* Function Name:  ReadFileInBinaryMode
 //*
-//* Purpose:		Reads a file and stores its data in a bytes buffer. If everything
-//*					is ok, the method returns a pointer to the buffer and the BufferSize
-//*					out parameter is populated.
+//* Purpose:        Reads a file and stores its data in a bytes buffer. If everything
+//*                 is ok, the method returns a pointer to the buffer and the BufferSize
+//*                 out parameter is populated.
 //*
-//* Parameters:		FileName	- IN - A pointer to the name of the file to be read.
-//*					BufferSize	- IN - A pointer to a variable to store the buffer size in bytes.
+//* Parameters:     FileName    - IN - A pointer to the name of the file to be read.
+//*                 BufferSize	- OUT - A pointer to a variable to store the buffer size in bytes.
 //*
-//* Returns:		A pointer to the bytes buffer which contains the file's data.
-//*					In case of error a NULL pointer is returned. Those cases are:
-//*						- FileName pointer is null.
-//*						- BufferSize pointer is null.
-//*						- If it's not possible to open the file.
-//*						- If it's not possible to allocate memory for the buffer to store
+//* Returns:        A pointer to the bytes buffer which contains the file's data.
+//*                 In case of error a NULL pointer is returned. Those cases are:
+//*                     - FileName pointer is null.
+//*                     - BufferSize pointer is null.
+//*                     - If it's not possible to open the file.
+//*                     - If it's not possible to allocate memory for the buffer to store
 //*						  the file's data.
 //*
 //***************************************************************************
-char* ReadFileInBinaryMode(char* FileName, long* BufferSize)
+unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize)
 {
-	FILE* FilePtr = NULL;
-	char* BufferPtr = NULL;
-	if (NULL == FileName || BufferSize == NULL)
-	{
-		return NULL;
-	}
-	FilePtr = fopen(FileName, "rb");
-	if (NULL == FilePtr)
-	{
-		*BufferSize = 0;
-		return NULL;
-	}
-	fseek(FilePtr, 0, SEEK_END);
-	*BufferSize = ftell(FilePtr);
-	fseek(FilePtr, 0, SEEK_SET);
-	BufferPtr = (char*)malloc(*BufferSize);
-	if (NULL == BufferPtr)
-	{
-		fclose(FilePtr);
-		*BufferSize = 0;
-		return NULL;
-	}
-	fread(BufferPtr, *BufferSize, 1, FilePtr);
-	fclose(FilePtr);
-	return BufferPtr;
+    FILE* FilePtr = NULL;
+    unsigned char* BufferPtr = NULL;
+    if (NULL == FileName || BufferSize == NULL)
+    {
+	    return NULL;
+    }
+    FilePtr = fopen(FileName, "rb");
+    if (NULL == FilePtr)
+    {
+	    *BufferSize = 0;
+	    return NULL;
+    }
+    fseek(FilePtr, 0, SEEK_END);
+    *BufferSize = ftell(FilePtr);
+    fseek(FilePtr, 0, SEEK_SET);
+    BufferPtr = (unsigned char*)malloc(*BufferSize);
+    if (NULL == BufferPtr)
+    {
+	    fclose(FilePtr);
+	    *BufferSize = 0;
+	    return NULL;
+    }
+    fread(BufferPtr, *BufferSize, 1, FilePtr);
+    fclose(FilePtr);
+    return BufferPtr;
 }
 
 //***************************************************************************

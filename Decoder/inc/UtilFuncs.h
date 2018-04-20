@@ -1,15 +1,17 @@
+//***************************************************************************
+//* FileName:       UtilFuncs.h
+//*
+//* Description:    Header file which contains utility functions to read
+//*                 codified audio files to obtain its coefficients.
+//*
+//***************************************************************************
+
 #ifndef UTILFUNCS_H_
 #define UTILFUNCS_H_
 
 #include <stdint.h>
 
-/*typedef struct CplxCoeff
-{
-    uint8_t real;
-    uint8_t img;
-} CplxCoeff;*/
-
-char* ReadFileInBinaryMode(char* FileName, long* BufferSize);
+unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize);
 
 uint8_t** ExtractDescriptor(unsigned char* File);
 

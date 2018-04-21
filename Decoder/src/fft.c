@@ -31,11 +31,13 @@ void fft(double* samples, double* realCoeficient, double* imCoeficient, int tota
 {
     double OUT_re = 0;
     double OUT_im = 0;
-    for (int k = 0; k < totalsamples; k++) 
+    int k = 0, n = 0;
+
+    for (k = 0; k < totalsamples; k++) 
     {
         OUT_re = 0;
         OUT_im = 0;
-        for (int n = 0; n < totalsamples; n++)
+        for (n = 0; n < totalsamples; n++)
         {
             OUT_re += samples[n] * cos(-2.0*M_PI*k*n / totalsamples);
             OUT_im += samples[n] * sin(-2.0*M_PI*k*n / totalsamples);
@@ -64,11 +66,13 @@ void ifft(double* realCoeficient, double* imCoeficient, double* SamplesIFFT, int
     double OUT_re = 0;
     double OUT_im = 0;
     double val = 0;
-    for (int k = 0; k < totalsamples; k++) {
+    int k = 0, n = 0;
+
+    for (k = 0; k < totalsamples; k++) {
         OUT_re = 0;
         OUT_im = 0;
         val = 0;
-        for (int n = 0; n < totalsamples; n++)
+        for (n = 0; n < totalsamples; n++)
         {
             val += realCoeficient[n] * cos(2.0*M_PI*k*n / totalsamples) - imCoeficient[n] * sin(2.0*M_PI*k*n / totalsamples);
         }

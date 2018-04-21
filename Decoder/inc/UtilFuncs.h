@@ -11,8 +11,8 @@
 
 #include <stdint.h>
 
-#define ANY
-//#define C55
+//#define ANY
+#define C55
 
 #ifdef ANY
 #define WRD_SIZE 8
@@ -28,10 +28,10 @@ typedef uint16_t headerType;
 
 unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize);
 
-uint8_t** ExtractDescriptor(unsigned char* File);
+headerType** ExtractDescriptor(unsigned char* File);
 
-int*** ExtractCoeffs(unsigned char* File);
+coefType*** ExtractCoeffs(unsigned char* File);
 
-int*** RetrieveIFFTCoeffs(coefType*** coeffs);
+coefType*** RetrieveIFFTCoeffs(coefType*** coeffs);
 
 #endif

@@ -14,6 +14,10 @@
 
 #include <math.h>
 
+#if C55X
+#define M_PI 3.14159265358979323846
+#endif
+
 //***************************************************************************
 //* Function Name:  fft
 //*
@@ -61,16 +65,12 @@ void fft(double* samples, double* realCoeficient, double* imCoeficient, int tota
 //* Returns:        None.
 //*
 //***************************************************************************
-void ifft(double* realCoeficient, double* imCoeficient, double* SamplesIFFT, int totalsamples)
+void ifft(int* realCoeficient, int* imCoeficient, double* SamplesIFFT, int totalsamples)
 {
-    double OUT_re = 0;
-    double OUT_im = 0;
     double val = 0;
     int k = 0, n = 0;
 
     for (k = 0; k < totalsamples; k++) {
-        OUT_re = 0;
-        OUT_im = 0;
         val = 0;
         for (n = 0; n < totalsamples; n++)
         {

@@ -1,4 +1,4 @@
-﻿//***************************************************************************
+//***************************************************************************
 //* FileName:       UtilFuncs.c
 //*
 //* Description:    Implementation of the utility functions that read
@@ -77,7 +77,7 @@ unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize)
 //* Function Name:	ExtractDescriptor
 //*
 //* Purpose:		Reads the byte data buffer and extracts the header descriptor,
-//*                     which is stored in global variable 
+//*                     which is stored in global variable
 //*                     Header[N : Audio block count][COEFF_COUNT], describing the amount
 //*                     of bits used to store each coefficient
 //*
@@ -87,6 +87,7 @@ unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize)
 //*                 -.- a pointer to Header[][]
 //*
 //***************************************************************************
+#ifndef C55
 uint8_t** ExtractDescriptor(unsigned char* File)
 {
 	int i = 0, j = 0;
@@ -98,9 +99,9 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	N <<= 8;
 	N |= File[0];
 	limit = (N * BYTES_PER_HEADER) + 2;
-	
+
 	Header = (headerType**) malloc(N * sizeof(headerType*));
-	
+
 	for(i = 2, j = 0, DataSize = 0; i < limit && j < N; j++)
 	{
 		Header[j] = (headerType*) malloc(COEFF_COUNT * sizeof(headerType));
@@ -115,6 +116,7 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	}
     return Header;
 }
+#endif
 #ifdef C55
 uint16_t** ExtractDescriptorC55(unsigned char* File)
 {
@@ -161,16 +163,16 @@ uint16_t** ExtractDescriptorC55(unsigned char* File)
 //*					Coeff[N : (Audio block count)] [2: (real, img)] [ACTUAL_COEFFS]
 //*
 //***************************************************************************
-int*** ExtractCoeffs(unsigned char* File)
+coefType*** ExtractCoeffs(unsigned char* File)
 {   //header, block idx, coeff number, data idx
 	int cftIdx = 0, blockIdx = 0, coeff = 0, dataIdx = 0;
-    
+
     //idx for scanning each byte, bitwise shift amount, requested amount of bits
 	short bitIdx = 0, bitShft = 0, reqBits = 0;//vars for byte processing
-    
+
     //move pointer to start of compressed data, 2 bytes for N, and N * 16 to skip over headers
 	unsigned char* Data = File + ((N*BYTES_PER_HEADER) + 2);
-	
+
 	// 3 dimensional array for storing complex coeffs
     coefType*** Coeffs = (coefType***) malloc(N * sizeof(coefType**));
 
@@ -186,7 +188,7 @@ int*** ExtractCoeffs(unsigned char* File)
 
         //loop through this block's header
 		for(cftIdx = 0; cftIdx < COEFF_COUNT; cftIdx++)
-		{   
+		{
             // 0->1 bit, 1->2 bits, 2->4 bits, 3->8 bits
 			reqBits = Header[blockIdx][cftIdx] == 0 ? 1 : ( 2 << (Header[blockIdx][cftIdx] - 1) );
 
@@ -241,9 +243,9 @@ int*** ExtractCoeffs(unsigned char* File)
 //*                     Coeff[N : (Audio block count)] [2: (real, img)] [COEFF_COUNT].
 //*
 //***************************************************************************
-int*** RetrieveIFFTCoeffs(coefType*** coeffs)
+coefType*** RetrieveIFFTCoeffs(coefType*** coeffs)
 {
-    int cftIdx = 0, blockIdx = 0, coeff = 0, invIdx = 0;
+    int cftIdx = 0, blockIdx = 0, invIdx = 0;
 
     // 3 dimensional array for storing complex coeffs
     coefType*** actualCoeffs = (coefType***)malloc(N * sizeof(coefType**));
@@ -266,7 +268,7 @@ int*** RetrieveIFFTCoeffs(coefType*** coeffs)
         for (cftIdx = 1, invIdx = COEFF_COUNT - 1; cftIdx < ACTUAL_COEFFS; cftIdx++, invIdx--)
         {
             actualCoeffs[blockIdx][0][cftIdx] = actualCoeffs[blockIdx][0][invIdx] = coeffs[blockIdx][0][cftIdx];
-            
+
             actualCoeffs[blockIdx][1][cftIdx] = actualCoeffs[blockIdx][1][invIdx] = coeffs[blockIdx][1][cftIdx];
         }
     }

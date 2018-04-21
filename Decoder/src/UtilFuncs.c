@@ -11,15 +11,18 @@
 #include "UtilFuncs.h"
 
 // Defines
+
 //32 real + 32 imaginary coeffs
 #define COEFF_COUNT 64
 #define ACTUAL_COEFFS 32
 #define BYTES_PER_HEADER 16
 
+#define SCALE_FCT 14
+
 // Global variables
 uint16_t N = 0;
 unsigned int DataSize = 0;
-uint8_t** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block [N, COEFF_COUNT]
+headerType** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block [N, COEFF_COUNT]
 short bitmask[4] = {0x01, 0x03, 0x0F, 0xFF}; //mask for requested amount of bits (1, 2, 4, 8)
 
 //***************************************************************************
@@ -89,18 +92,18 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	int i = 0, j = 0;
 	short limit = 0;
 	uint16_t headerIdx = 0;
-	uint8_t byte;
+    headerType byte;
 	N = 0;
 	N = File[1];
 	N <<= 8;
 	N |= File[0];
 	limit = (N * BYTES_PER_HEADER) + 2;
 	
-	Header = (uint8_t**) malloc(N * sizeof(uint8_t*));
+	Header = (headerType**) malloc(N * sizeof(headerType*));
 	
 	for(i = 2, j = 0, DataSize = 0; i < limit && j < N; j++)
 	{
-		Header[j] = (uint8_t*) malloc(COEFF_COUNT * sizeof(uint8_t));
+		Header[j] = (headerType*) malloc(COEFF_COUNT * sizeof(headerType));
 		for(headerIdx = 0; headerIdx < COEFF_COUNT; headerIdx+=4, i++)
 		{
 		    byte = File[i];
@@ -112,6 +115,37 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	}
     return Header;
 }
+#ifdef C55
+uint16_t** ExtractDescriptorC55(unsigned char* File)
+{
+    int i = 0, j = 0;
+    short limit = 0;
+    uint16_t headerIdx = 0;
+    headerType byte;
+    N = File[0];
+    limit = (N * BYTES_PER_HEADER) + 2;
+
+    Header = (headerType**)malloc(N * sizeof(headerType*));
+
+    for (i = 2, j = 0, DataSize = 0; i < limit && j < N; j++)
+    {
+        Header[j] = (headerType*)malloc(COEFF_COUNT * sizeof(headerType));
+        for (headerIdx = 0; headerIdx < COEFF_COUNT; headerIdx += 8, i++)
+        {
+            byte = File[i];
+            DataSize += bitmask[(Header[j][headerIdx] = ((byte & 0xC000) >> 14))];
+            DataSize += bitmask[(Header[j][headerIdx + 1] = ((byte & 0x3000) >> 12))];
+            DataSize += bitmask[(Header[j][headerIdx + 2] = ((byte & 0xC00) >> 10))];
+            DataSize += bitmask[(Header[j][headerIdx + 3] = (byte & 0x300) >> 8)];
+            DataSize += bitmask[(Header[j][headerIdx + 4] = ((byte & 0xC0) >> 6))];
+            DataSize += bitmask[(Header[j][headerIdx + 5] = ((byte & 0x30) >> 4))];
+            DataSize += bitmask[(Header[j][headerIdx + 6] = ((byte & 0xC) >> 2))];
+            DataSize += bitmask[(Header[j][headerIdx + 7] = (byte & 0x3))];
+        }
+    }
+    return Header;
+}
+#endif
 
 //***************************************************************************
 //* Function Name:	ExtractCoeffs
@@ -136,22 +170,19 @@ int*** ExtractCoeffs(unsigned char* File)
     
     //move pointer to start of compressed data, 2 bytes for N, and N * 16 to skip over headers
 	unsigned char* Data = File + ((N*BYTES_PER_HEADER) + 2);
-
-	//Data section size in bits was extracted on the header parser, divide by 8 to get the index count for Data
-	const unsigned int dataLastIdx = DataSize >> 3;
 	
 	// 3 dimensional array for storing complex coeffs
-	int*** Coeffs = (int***) malloc(N * sizeof(int**));
+    coefType*** Coeffs = (coefType***) malloc(N * sizeof(coefType**));
 
 	//loop through each audio block (8ms)
 	for(dataIdx = 0, blockIdx = 0; blockIdx < N; blockIdx++, dataIdx++)
 	{
-		Coeffs[blockIdx] = (int**) malloc(2 * sizeof(int*));
-		Coeffs[blockIdx][0] = (int*) malloc(ACTUAL_COEFFS * sizeof(int));
-		Coeffs[blockIdx][1] = (int*) malloc(ACTUAL_COEFFS * sizeof(int));
+		Coeffs[blockIdx] = (coefType**) malloc(2 * sizeof(coefType*));
+		Coeffs[blockIdx][0] = (coefType*) malloc(ACTUAL_COEFFS * sizeof(coefType));
+		Coeffs[blockIdx][1] = (coefType*) malloc(ACTUAL_COEFFS * sizeof(coefType));
 
-        //8 is MSB
-		bitIdx = 8;
+        //8 or 16 is MSB
+		bitIdx = WRD_SIZE;
 
         //loop through this block's header
 		for(cftIdx = 0; cftIdx < COEFF_COUNT; cftIdx++)
@@ -167,13 +198,13 @@ int*** ExtractCoeffs(unsigned char* File)
 				//pull entire byte, requested bits are obtained with the mask applied after these else-ifs
 				coeff = Data[dataIdx];
 				++dataIdx;
-				bitIdx = 8;
+				bitIdx = WRD_SIZE;
 			}
 			else if(bitShft < 0)//trailing bits, supports any amount of trailing between 1-8
 			{
 				//pull remaining bits, leave space for additional bits stored in next Data byte
 				coeff = (Data[dataIdx] << (-bitShft));//i.e reqBits - bitIdx
-				bitIdx = 8 - (-bitShft);
+				bitIdx = WRD_SIZE - (-bitShft);
 				++dataIdx;
 				coeff |= Data[dataIdx] >> bitIdx;
 			}
@@ -187,11 +218,11 @@ int*** ExtractCoeffs(unsigned char* File)
 
 			if(cftIdx < ACTUAL_COEFFS)//real
 			{
-				Coeffs[blockIdx][0][cftIdx] = ((coeff - 128) << 13);//offset and scale back
+				Coeffs[blockIdx][0][cftIdx] = ((coeff - 128) << SCALE_FCT);//offset and scale back
 			}
 			else//img
 			{
-				Coeffs[blockIdx][1][cftIdx - ACTUAL_COEFFS] = ((coeff - 128) << 13);
+				Coeffs[blockIdx][1][cftIdx - ACTUAL_COEFFS] = ((coeff - 128) << SCALE_FCT);
 			}
 		}
 	}
@@ -210,19 +241,19 @@ int*** ExtractCoeffs(unsigned char* File)
 //*                     Coeff[N : (Audio block count)] [2: (real, img)] [COEFF_COUNT].
 //*
 //***************************************************************************
-int*** RetrieveIFFTCoeffs(int*** coeffs)
+int*** RetrieveIFFTCoeffs(coefType*** coeffs)
 {
     int cftIdx = 0, blockIdx = 0, coeff = 0, invIdx = 0;
 
     // 3 dimensional array for storing complex coeffs
-    int*** actualCoeffs = (int***)malloc(N * sizeof(int**));
+    coefType*** actualCoeffs = (coefType***)malloc(N * sizeof(coefType**));
 
     //loop through each audio block (8ms)
     for (blockIdx = 0; blockIdx < N; blockIdx++)
     {
-        actualCoeffs[blockIdx] = (int**)malloc(2 * sizeof(int*));
-        actualCoeffs[blockIdx][0] = (int*)malloc(COEFF_COUNT * sizeof(int));
-        actualCoeffs[blockIdx][1] = (int*)malloc(COEFF_COUNT * sizeof(int));
+        actualCoeffs[blockIdx] = (coefType**)malloc(2 * sizeof(coefType*));
+        actualCoeffs[blockIdx][0] = (coefType*)malloc(COEFF_COUNT * sizeof(coefType));
+        actualCoeffs[blockIdx][1] = (coefType*)malloc(COEFF_COUNT * sizeof(coefType));
 
         //1st and 32nd coeffs do not have mirror, nor imaginary part
         actualCoeffs[blockIdx][0][0] = coeffs[blockIdx][0][0];

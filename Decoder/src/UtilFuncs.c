@@ -15,7 +15,6 @@
 //32 real + 32 imaginary coeffs
 #define COEFF_COUNT 64
 #define ACTUAL_COEFFS 32
-#define BYTES_PER_HEADER 16
 
 #define SCALE_FCT 14
 
@@ -98,7 +97,7 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	N = File[1];
 	N <<= 8;
 	N |= File[0];
-	limit = (N * BYTES_PER_HEADER) + 2;
+	limit = (N * WORDS_PER_HEADER) + 2;
 
 	Header = (headerType**) malloc(N * sizeof(headerType*));
 
@@ -125,7 +124,7 @@ uint16_t** ExtractDescriptorC55(unsigned char* File)
     uint16_t headerIdx = 0;
     headerType byte;
     N = File[0];
-    limit = (N * BYTES_PER_HEADER) + 2;
+    limit = (N * WORDS_PER_HEADER) + 1;
 
     Header = (headerType**)malloc(N * sizeof(headerType*));
 
@@ -171,7 +170,8 @@ coefType*** ExtractCoeffs(unsigned char* File)
 	short bitIdx = 0, bitShft = 0, reqBits = 0;//vars for byte processing
 
     //move pointer to start of compressed data, 2 bytes for N, and N * 16 to skip over headers
-	unsigned char* Data = File + ((N*BYTES_PER_HEADER) + 2);
+	//OR in C55									1 word  for N, and N * 8
+	unsigned char* Data = File + ((N*WORDS_PER_HEADER) + (WORDS_PER_HEADER / 8));
 
 	// 3 dimensional array for storing complex coeffs
     coefType*** Coeffs = (coefType***) malloc(N * sizeof(coefType**));

@@ -170,9 +170,10 @@ void FillWavHeader(struct WavFile* Header, uint32_t NumOfSamples)
 int WavWriter(const char* FileName, uint16_t* Samples, uint32_t NumOfSamples)
 {
     int Status = SUCCESS;
+    FILE* pFile = NULL;
     struct WavFile WavHeaderFile;
     FillWavHeader(&WavHeaderFile, NumOfSamples);
-    FILE* pFile = fopen(FileName, "wb");
+    pFile = fopen(FileName, "wb");
     if (NULL == pFile) 
     {
         Status = FAILURE;
@@ -185,4 +186,3 @@ int WavWriter(const char* FileName, uint16_t* Samples, uint32_t NumOfSamples)
     }
     return Status;
 }
-

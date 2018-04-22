@@ -11,6 +11,6 @@
 
 #include <stdint.h> // for int16_t and int32_t
 
-int WavWriter(const char* FileName, uint16_t* Samples, uint32_t NumOfSamples);
+int WavWriter(const char* FileName, int16_t* Samples, uint32_t NumOfSamples);
 
 #endif

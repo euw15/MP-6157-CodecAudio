@@ -258,8 +258,8 @@ coefType*** RetrieveIFFTCoeffs(coefType*** coeffs)
         actualCoeffs[blockIdx][1] = (coefType*)malloc(COEFF_COUNT * sizeof(coefType));
 
         //1st and 32nd coeffs do not have mirror, nor imaginary part
-        actualCoeffs[blockIdx][0][0] = coeffs[blockIdx][0][0];
-        actualCoeffs[blockIdx][0][32] = coeffs[blockIdx][1][0];//32nd real coeff(pivot) stored in 1st img, since 1st img is known to be 0
+        actualCoeffs[blockIdx][0][0] = (coeffs[blockIdx][0][0] >> SCALE_FCT) + 128;
+        actualCoeffs[blockIdx][0][32] = (coeffs[blockIdx][1][0] >> SCALE_FCT) + 128;//32nd real coeff(pivot) stored in 1st img, since 1st img is known to be 0
 
         actualCoeffs[blockIdx][1][0] = 0;//first img coeff is 0
         actualCoeffs[blockIdx][1][32] = 0;
@@ -267,9 +267,8 @@ coefType*** RetrieveIFFTCoeffs(coefType*** coeffs)
         //loop through each coeff
         for (cftIdx = 1, invIdx = COEFF_COUNT - 1; cftIdx < ACTUAL_COEFFS; cftIdx++, invIdx--)
         {
-            actualCoeffs[blockIdx][0][cftIdx] = actualCoeffs[blockIdx][0][invIdx] = coeffs[blockIdx][0][cftIdx];
-
-            actualCoeffs[blockIdx][1][cftIdx] = actualCoeffs[blockIdx][1][invIdx] = coeffs[blockIdx][1][cftIdx];
+            actualCoeffs[blockIdx][0][cftIdx] = actualCoeffs[blockIdx][0][invIdx] = (coeffs[blockIdx][0][cftIdx] >> SCALE_FCT) + 128;
+            actualCoeffs[blockIdx][1][cftIdx] = actualCoeffs[blockIdx][1][invIdx] = (coeffs[blockIdx][1][cftIdx] >> SCALE_FCT) + 128;
         }
     }
     return actualCoeffs;

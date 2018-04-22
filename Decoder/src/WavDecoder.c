@@ -126,7 +126,7 @@ void FillWavHeader(struct WavFile* Header, uint32_t NumOfSamples)
     const uint32_t c_iSubchunk1Id = 0x666d7420;     // "fmt "
     const uint32_t c_iSubchunk1Size = 16;           // 16 for PCM
     const uint16_t c_iAudioFormat = 1;              // PCM = 1 (no compression)
-    const uint16_t c_iNumChannels = 2;              // Stereo = 2
+    const uint16_t c_iNumChannels = 1;              // Stereo = 2
     const uint32_t c_iSampleRate = 8000;            // Frequency = 8kHz
     const uint16_t c_iBitsPerSample = 16;           // 16 bits
     const uint32_t c_iSubchunk2Id = 0x64617461;     // "data"
@@ -167,7 +167,7 @@ void FillWavHeader(struct WavFile* Header, uint32_t NumOfSamples)
 //*                 FAILURE in case of error.
 //*
 //***************************************************************************
-int WavWriter(const char* FileName, uint16_t* Samples, uint32_t NumOfSamples)
+int WavWriter(const char* FileName, int16_t* Samples, uint32_t NumOfSamples)
 {
     int Status = SUCCESS;
     FILE* pFile = NULL;
@@ -181,7 +181,7 @@ int WavWriter(const char* FileName, uint16_t* Samples, uint32_t NumOfSamples)
     if (SUCCESS == Status) 
     {
         fwrite(&WavHeaderFile, sizeof(struct WavFile), 1, pFile);
-        fwrite(Samples, sizeof(uint16_t), NumOfSamples, pFile);
+        fwrite(Samples, sizeof(int16_t), NumOfSamples, pFile);
         fclose(pFile);
     }
     return Status;

@@ -126,7 +126,7 @@ void FillWavHeader(struct WavFile* Header, uint32_t NumOfSamples)
     const uint32_t c_iSubchunk1Id = 0x666d7420;     // "fmt "
     const uint32_t c_iSubchunk1Size = 16;           // 16 for PCM
     const uint16_t c_iAudioFormat = 1;              // PCM = 1 (no compression)
-    const uint16_t c_iNumChannels = 1;              // Mono = 1
+    const uint16_t c_iNumChannels = 2;              // Stereo = 2
     const uint32_t c_iSampleRate = 8000;            // Frequency = 8kHz
     const uint16_t c_iBitsPerSample = 16;           // 16 bits
     const uint32_t c_iSubchunk2Id = 0x64617461;     // "data"
@@ -157,7 +157,7 @@ void FillWavHeader(struct WavFile* Header, uint32_t NumOfSamples)
 //* Function Name:  WavWriter
 //*
 //* Purpose:        Creates a Wav file for a given number of samples. Using PCM,
-//*                 16 bits per sample, Mono, and at frequency of 8kHz.
+//*                 16 bits per sample, Stereo, and at frequency of 8kHz.
 //*
 //* Parameters:     FileName        - IN - A pointer to the array of real coefficients.
 //*                 Samples	        - IN - A pointer to the array of samples.

@@ -11,8 +11,8 @@
 
 #include <stdint.h>
 
-//#define ANY
-#define C55
+#define ANY
+//#define C55
 
 #ifdef ANY
 #define WRD_SIZE 8

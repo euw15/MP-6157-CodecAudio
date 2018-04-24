@@ -1,4 +1,4 @@
-//***************************************************************************
+﻿//***************************************************************************
 //* FileName:       UtilFuncs.c
 //*
 //* Description:    Implementation of the utility functions that read
@@ -87,7 +87,7 @@ unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize)
 //*
 //***************************************************************************
 #ifndef C55
-uint8_t** ExtractDescriptor(unsigned char* File)
+uint8_t** ExtractDescriptor(unsigned char* File, int* BlockCount)
 {
 	int i = 0, j = 0;
 	short limit = 0;
@@ -96,7 +96,7 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 	N = 0;
 	N = File[1];
 	N <<= 8;
-	N |= File[0];
+	*BlockCount = (N |= File[0]);
 	limit = (N * WORDS_PER_HEADER) + 2;
 
 	Header = (headerType**) malloc(N * sizeof(headerType*));
@@ -117,13 +117,13 @@ uint8_t** ExtractDescriptor(unsigned char* File)
 }
 #endif
 #ifdef C55
-uint16_t** ExtractDescriptorC55(unsigned char* File)
+uint16_t** ExtractDescriptorC55(unsigned char* File, int* BlockCount)
 {
     int i = 0, j = 0;
     short limit = 0;
     uint16_t headerIdx = 0;
     headerType byte;
-    N = File[0];
+    *BlockCount = N = File[0];
     limit = (N * WORDS_PER_HEADER) + 1;
 
     Header = (headerType**)malloc(N * sizeof(headerType*));

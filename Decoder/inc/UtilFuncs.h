@@ -31,9 +31,9 @@ typedef uint16_t headerType;
 unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize);
 
 #ifdef C55
-headerType** ExtractDescriptorC55(unsigned char* File);
+headerType** ExtractDescriptorC55(unsigned char* File, int* BlockCount);
 #else
-headerType** ExtractDescriptor(unsigned char* File);
+headerType** ExtractDescriptor(unsigned char* File, int* BlockCount);
 #endif
 
 coefType*** ExtractCoeffs(unsigned char* File);

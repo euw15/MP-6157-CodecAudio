@@ -20,7 +20,6 @@
 
 // Global variables
 uint16_t N = 0;
-unsigned int DataSize = 0;
 headerType** Header; //of size N, populated in ExtractDescriptor. It holds the header with amount of bits used to store each coefficient, for each audio block [N, COEFF_COUNT]
 short bitmask[4] = {0x01, 0x03, 0x0F, 0xFF}; //mask for requested amount of bits (1, 2, 4, 8)
 
@@ -94,6 +93,7 @@ uint8_t** ExtractDescriptor(unsigned char* File, int* BlockCount)
 	uint16_t headerIdx = 0;
     headerType byte;
 	N = 0;
+
 	N = File[1];
 	N <<= 8;
 	*BlockCount = (N |= File[0]);
@@ -101,16 +101,16 @@ uint8_t** ExtractDescriptor(unsigned char* File, int* BlockCount)
 
 	Header = (headerType**) malloc(N * sizeof(headerType*));
 
-	for(i = 2, j = 0, DataSize = 0; i < limit && j < N; j++)
+	for(i = 2, j = 0; i < limit && j < N; j++)
 	{
 		Header[j] = (headerType*) malloc(COEFF_COUNT * sizeof(headerType));
 		for(headerIdx = 0; headerIdx < COEFF_COUNT; headerIdx+=4, i++)
 		{
 		    byte = File[i];
-			DataSize += bitmask[(Header[j][headerIdx]   = ((byte & 0xC0) >> 6) )];
-			DataSize += bitmask[(Header[j][headerIdx+1] = ((byte & 0x30) >> 4) )];
-			DataSize += bitmask[(Header[j][headerIdx+2] = ((byte & 0xC) >> 2) )];
-			DataSize += bitmask[(Header[j][headerIdx+3] = (byte & 0x3) )];
+			Header[j][headerIdx]   = ((byte & 0xC0) >> 6);
+			Header[j][headerIdx+1] = ((byte & 0x30) >> 4);
+			Header[j][headerIdx+2] = ((byte & 0xC) >> 2);
+			Header[j][headerIdx+3] = (byte & 0x3);
 		}
 	}
     return Header;
@@ -177,7 +177,7 @@ coefType*** ExtractCoeffs(unsigned char* File)
     coefType*** Coeffs = (coefType***) malloc(N * sizeof(coefType**));
 
 	//loop through each audio block (8ms)
-	for(dataIdx = 0, blockIdx = 0; blockIdx < N; blockIdx++, dataIdx++)
+	for(dataIdx = 0, blockIdx = 0; blockIdx < N; blockIdx++)
 	{
 		Coeffs[blockIdx] = (coefType**) malloc(2 * sizeof(coefType*));
 		Coeffs[blockIdx][0] = (coefType*) malloc(ACTUAL_COEFFS * sizeof(coefType));
@@ -202,7 +202,7 @@ coefType*** ExtractCoeffs(unsigned char* File)
 				++dataIdx;
 				bitIdx = WRD_SIZE;
 			}
-			else if(bitShft < 0)//trailing bits, supports any amount of trailing between 1-8
+			else if(bitShft < 0)//trailing bits, supports any amount of trailing between 1<->WRD_SIZE
 			{
 				//pull remaining bits, leave space for additional bits stored in next Data byte
 				coeff = (Data[dataIdx] << (-bitShft));//i.e reqBits - bitIdx
@@ -220,14 +220,18 @@ coefType*** ExtractCoeffs(unsigned char* File)
 
 			if(cftIdx < ACTUAL_COEFFS)//real
 			{
-				Coeffs[blockIdx][0][cftIdx] = ((coeff - 128) << SCALE_FCT);//offset and scale back
+                Coeffs[blockIdx][0][cftIdx] = coeff;
 			}
 			else//img
 			{
-				Coeffs[blockIdx][1][cftIdx - ACTUAL_COEFFS] = ((coeff - 128) << SCALE_FCT);
+                Coeffs[blockIdx][1][cftIdx - ACTUAL_COEFFS] = coeff;
 			}
 		}
-	}
+        if (bitShft != 0)
+        {
+            dataIdx++;
+        }
+    }
     return Coeffs;
 }
 
@@ -258,8 +262,8 @@ coefType*** RetrieveIFFTCoeffs(coefType*** coeffs)
         actualCoeffs[blockIdx][1] = (coefType*)malloc(COEFF_COUNT * sizeof(coefType));
 
         //1st and 32nd coeffs do not have mirror, nor imaginary part
-        actualCoeffs[blockIdx][0][0] = (coeffs[blockIdx][0][0] >> SCALE_FCT) + 128;
-        actualCoeffs[blockIdx][0][32] = (coeffs[blockIdx][1][0] >> SCALE_FCT) + 128;//32nd real coeff(pivot) stored in 1st img, since 1st img is known to be 0
+        actualCoeffs[blockIdx][0][0] = ((coeffs[blockIdx][0][0] - 128) << SCALE_FCT);//offset and scale back
+        actualCoeffs[blockIdx][0][32] = ((coeffs[blockIdx][1][0] - 128) << SCALE_FCT);//32nd real coeff(pivot) stored in 1st img, since 1st img is known to be 0
 
         actualCoeffs[blockIdx][1][0] = 0;//first img coeff is 0
         actualCoeffs[blockIdx][1][32] = 0;
@@ -267,8 +271,8 @@ coefType*** RetrieveIFFTCoeffs(coefType*** coeffs)
         //loop through each coeff
         for (cftIdx = 1, invIdx = COEFF_COUNT - 1; cftIdx < ACTUAL_COEFFS; cftIdx++, invIdx--)
         {
-            actualCoeffs[blockIdx][0][cftIdx] = actualCoeffs[blockIdx][0][invIdx] = (coeffs[blockIdx][0][cftIdx] >> SCALE_FCT) + 128;
-            actualCoeffs[blockIdx][1][cftIdx] = actualCoeffs[blockIdx][1][invIdx] = (coeffs[blockIdx][1][cftIdx] >> SCALE_FCT) + 128;
+            actualCoeffs[blockIdx][0][cftIdx] = actualCoeffs[blockIdx][0][invIdx] = ((coeffs[blockIdx][0][cftIdx] - 128) << SCALE_FCT);//offset and scale back
+            actualCoeffs[blockIdx][1][cftIdx] = actualCoeffs[blockIdx][1][invIdx] = ((coeffs[blockIdx][1][cftIdx] - 128) << SCALE_FCT);
         }
     }
     return actualCoeffs;

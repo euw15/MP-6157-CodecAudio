@@ -79,3 +79,18 @@ void ifft(int* realCoeficient, int* imCoeficient, double* SamplesIFFT, int total
         SamplesIFFT[k] = val / totalsamples;
     }
 }
+
+void ifft16(int* realCoeficient, int* imCoeficient, int16_t* SamplesIFFT, int totalsamples)
+{
+    double val = 0;
+    int k = 0, n = 0;
+
+    for (k = 0; k < totalsamples; k++) {
+        val = 0;
+        for (n = 0; n < totalsamples; n++)
+        {
+            val += realCoeficient[n] * cos(2.0*M_PI*k*n / totalsamples) - imCoeficient[n] * sin(2.0*M_PI*k*n / totalsamples);
+        }
+        SamplesIFFT[k] = (int16_t)(val / totalsamples);
+    }
+}

@@ -7,6 +7,7 @@
 
 #include "fft.h"
 #include "GeneralFlags.h"
+#include "CosAndSinPreCalc.h"
 
 #if MSVC_COMPILER
 #define _USE_MATH_DEFINES
@@ -80,17 +81,49 @@ void ifft(int* realCoeficient, int* imCoeficient, double* SamplesIFFT, int total
     }
 }
 
-void ifft16(int* realCoeficient, int* imCoeficient, int16_t* SamplesIFFT, int totalsamples)
-{
-    double val = 0;
-    int k = 0, n = 0;
+#define QA1 23
+#define QB1 4
 
-    for (k = 0; k < totalsamples; k++) {
+#define QA2 23
+#define QB2 16
+
+#define QA3 23
+#define QB3 30
+
+void ifft_fixedpoint(int32_t* realCoeficient, int32_t* imCoeficient, int16_t* SamplesIFFT, int32_t totalsamples)
+{
+    int32_t arrayaddr = 0;
+    int32_t val = 0;
+    int32_t k = 0, n = 0;
+    int32_t shift = 0;
+    int32_t m1_shift = 0;
+    int32_t m2_shift = 0;
+    LongReg m1 = 0;
+    LongReg m2 = 0;
+
+#if C55X
+    shift = QB2 - (31 - QA2) + 4;
+#else
+    shift = QB3 - (31 - QA3) + 4;
+#endif
+
+    for (k = 0; k < totalsamples; k++)
+    {
+        arrayaddr = totalsamples * k;
         val = 0;
-        for (n = 0; n < totalsamples; n++)
+        for (n = 0; n < totalsamples; n++, arrayaddr++)
         {
-            val += realCoeficient[n] * cos(2.0*M_PI*k*n / totalsamples) - imCoeficient[n] * sin(2.0*M_PI*k*n / totalsamples);
+            m1 = (LongReg)(realCoeficient[n]) * (LongReg)(CosArray[arrayaddr]);
+            m2 = (LongReg)(imCoeficient[n]) * (LongReg)(SinArray[arrayaddr]);
+            m1 >>= shift;
+            m2 >>= shift;
+            m1_shift = m1;
+            m2_shift = m2;
+            val += m1_shift;
+            val -= m2_shift;
         }
-        SamplesIFFT[k] = (int16_t)(val / totalsamples);
+        val = val / totalsamples;
+        val >>= QB1;
+        SamplesIFFT[k] = val;
     }
 }

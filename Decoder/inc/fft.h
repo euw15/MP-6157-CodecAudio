@@ -11,6 +11,7 @@
 
 void fft(double* samples, double* realCoeficient, double* imCoeficient, int totalsamples);
 void ifft(int* realCoeficient, int* imCoeficient, double* SamplesIFFT, int totalsamples);
-void ifft16(int* realCoeficient, int* imCoeficient, int16_t* SamplesIFFT, int totalsamples);
+
+void ifft_fixedpoint(int32_t* realCoeficient, int32_t* imCoeficient, int16_t* SamplesIFFT, int32_t totalsamples);
 
 #endif

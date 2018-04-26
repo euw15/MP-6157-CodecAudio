@@ -5,19 +5,15 @@
 //*
 //***************************************************************************
 
+#include "GeneralFlags.h"
 #include "UtilFuncs.h"
 #include "fft.h"
 #include "WavDecoder.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#define SUCCESS 0
-#define FAILURE -1
-#define TRACING 0
-#define SAMPLES_PER_BLOCK   64
+#include <string.h>
 
 const char* c_sFileName = "C:\\Output_i55.bin";
-#define NULL 0
 
 int main()
 {
@@ -69,7 +65,7 @@ int main()
 
     for(BlockIdx = 0; BlockIdx < BlockCount; BlockIdx++, SampleCounterAddress += SAMPLES_PER_BLOCK)
     {
-        ifft16(IFFTCoeffs[BlockIdx][0], IFFTCoeffs[BlockIdx][1], SampleBuffer, SAMPLES_PER_BLOCK);
+        //ifft16(IFFTCoeffs[BlockIdx][0], IFFTCoeffs[BlockIdx][1], SampleBuffer, SAMPLES_PER_BLOCK);
         memcpy(SampleCounterAddress, SampleBuffer, SAMPLES_PER_BLOCK * sizeof(int16_t));
     }
 

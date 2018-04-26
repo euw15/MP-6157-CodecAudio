@@ -1,4 +1,4 @@
-﻿//***************************************************************************
+//***************************************************************************
 //* FileName:       UtilFuncs.c
 //*
 //* Description:    Implementation of the utility functions that read
@@ -85,8 +85,8 @@ unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize)
 //*                 -.- a pointer to Header[][]
 //*
 //***************************************************************************
-#ifndef C55
-uint8_t** ExtractDescriptor(unsigned char* File, int* BlockCount)
+//#ifndef C55
+headerType** ExtractDescriptor(unsigned char* File, int* BlockCount)
 {
 	int i = 0, j = 0;
 	short limit = 0;
@@ -115,8 +115,8 @@ uint8_t** ExtractDescriptor(unsigned char* File, int* BlockCount)
 	}
     return Header;
 }
-#endif
-#ifdef C55
+//#endif
+/*#ifdef C55
 uint16_t** ExtractDescriptorC55(unsigned char* File, int* BlockCount)
 {
     int i = 0, j = 0;
@@ -128,25 +128,25 @@ uint16_t** ExtractDescriptorC55(unsigned char* File, int* BlockCount)
 
     Header = (headerType**)malloc(N * sizeof(headerType*));
 
-    for (i = 2, j = 0, DataSize = 0; i < limit && j < N; j++)
+    for (i = 2, j = 0; i < limit && j < N; j++)
     {
         Header[j] = (headerType*)malloc(COEFF_COUNT * sizeof(headerType));
         for (headerIdx = 0; headerIdx < COEFF_COUNT; headerIdx += 8, i++)
         {
             byte = File[i];
-            DataSize += bitmask[(Header[j][headerIdx] = ((byte & 0xC000) >> 14))];
-            DataSize += bitmask[(Header[j][headerIdx + 1] = ((byte & 0x3000) >> 12))];
-            DataSize += bitmask[(Header[j][headerIdx + 2] = ((byte & 0xC00) >> 10))];
-            DataSize += bitmask[(Header[j][headerIdx + 3] = (byte & 0x300) >> 8)];
-            DataSize += bitmask[(Header[j][headerIdx + 4] = ((byte & 0xC0) >> 6))];
-            DataSize += bitmask[(Header[j][headerIdx + 5] = ((byte & 0x30) >> 4))];
-            DataSize += bitmask[(Header[j][headerIdx + 6] = ((byte & 0xC) >> 2))];
-            DataSize += bitmask[(Header[j][headerIdx + 7] = (byte & 0x3))];
+            Header[j][headerIdx] = ((byte & 0xC000) >> 14);
+            Header[j][headerIdx + 1] = ((byte & 0x3000) >> 12);
+            Header[j][headerIdx + 2] = ((byte & 0xC00) >> 10);
+            Header[j][headerIdx + 3] = ((byte & 0x300) >> 8);
+            Header[j][headerIdx + 4] = ((byte & 0xC0) >> 6);
+            Header[j][headerIdx + 5] = ((byte & 0x30) >> 4);
+            Header[j][headerIdx + 6] = ((byte & 0xC) >> 2);
+            Header[j][headerIdx + 7] = (byte & 0x3);
         }
     }
     return Header;
 }
-#endif
+#endif*/
 
 //***************************************************************************
 //* Function Name:	ExtractCoeffs

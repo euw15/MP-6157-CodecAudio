@@ -5,16 +5,18 @@
 //*                 codified audio files to obtain its coefficients.
 //*
 //***************************************************************************
+#include "UtilFuncs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "UtilFuncs.h"
 
 // Defines
 
 //32 real + 32 imaginary coeffs
 #define COEFF_COUNT 64
 #define ACTUAL_COEFFS 32
+#define WORDS_PER_HEADER 16
+#define WRD_SIZE 8
 
 #define SCALE_FCT 14
 
@@ -85,7 +87,7 @@ unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize)
 //*                 -.- a pointer to Header[][]
 //*
 //***************************************************************************
-//#ifndef C55
+#if !C55X
 headerType** ExtractDescriptor(unsigned char* File, int* BlockCount)
 {
 	int i = 0, j = 0;
@@ -115,8 +117,7 @@ headerType** ExtractDescriptor(unsigned char* File, int* BlockCount)
 	}
     return Header;
 }
-//#endif
-/*#ifdef C55
+#else
 uint16_t** ExtractDescriptorC55(unsigned char* File, int* BlockCount)
 {
     int i = 0, j = 0;
@@ -146,7 +147,7 @@ uint16_t** ExtractDescriptorC55(unsigned char* File, int* BlockCount)
     }
     return Header;
 }
-#endif*/
+#endif
 
 //***************************************************************************
 //* Function Name:	ExtractCoeffs

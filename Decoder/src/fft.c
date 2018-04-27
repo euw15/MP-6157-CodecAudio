@@ -19,6 +19,12 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#if !C55X
+typedef int64_t LongReg;
+#else
+typedef long long LongReg;
+#endif
+
 //***************************************************************************
 //* Function Name:  fft
 //*

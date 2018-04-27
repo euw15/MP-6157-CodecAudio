@@ -5,13 +5,14 @@
 //*
 //***************************************************************************
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "GeneralFlags.h"
 #include "UtilFuncs.h"
 #include "fft.h"
 #include "WavDecoder.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 const char* c_sFileName = "C:\\Output_i55.bin";
 
@@ -28,26 +29,26 @@ int main()
     int BlockIdx = 0;
     int BlockCount = 0;
 
-#ifdef TRACING
-    printf("Starting reading file...\n");
-#endif
     FileBuffer = ReadFileInBinaryMode(c_sFileName, &FileSize);
     if (FileBuffer == NULL || FileSize <= 0)
     {
-#ifdef TRACING
-        printf("Error found during reading file...\n");
-#endif
         return FAILURE;
     }
 
+#if !C55X
     Header = ExtractDescriptor(FileBuffer, &BlockCount);
+#else
+    Header = ExtractDescriptorC55(FileBuffer, &BlockCount);
+#endif
 
     Coeffs = ExtractCoeffs(FileBuffer);
 
+    //	Free memory
     free(FileBuffer);
 
     IFFTCoeffs = RetrieveIFFTCoeffs(Coeffs);
-    //free mem
+
+    //	Free memory
 	for (BlockIdx = 0; BlockIdx < BlockCount; BlockIdx++)
 	{
 		free(Header[BlockIdx]);
@@ -79,8 +80,7 @@ int main()
     }
     free(IFFTCoeffs);
 
-
-    WavWriter("C:\\Users\\lopezgui\\Desktop\\Ak7.wav", Samples, BlockCount * SAMPLES_PER_BLOCK);
+    WavWriter("Ak7.wav", Samples, BlockCount * SAMPLES_PER_BLOCK);
 
     //free mem
     free(Samples);

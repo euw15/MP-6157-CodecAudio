@@ -12,19 +12,15 @@
 #include <stdint.h>
 #include "GeneralFlags.h"
 
-#if !C55X
-typedef int coefType;
-typedef uint8_t headerType;
-#else
-typedef long coefType;
-typedef uint16_t headerType;
-#endif
+typedef int32_t coefType;
 
 #if C55X
-headerType** ExtractDescriptorC55(unsigned char* File, int* BlockCount);
+typedef uint16_t headerType;
 #else
-headerType** ExtractDescriptor(unsigned char* File, int* BlockCount);
+typedef uint8_t headerType;
 #endif
+
+headerType** ExtractDescriptor(unsigned char* File, int* BlockCount);
 
 unsigned char* ReadFileInBinaryMode(const char* FileName, long* BufferSize);
 coefType*** ExtractCoeffs(unsigned char* File);

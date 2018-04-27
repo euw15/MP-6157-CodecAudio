@@ -11,7 +11,6 @@
 #include <stdint.h>
 
 #define MSVC_COMPILER 1
-#define GCC_COMPILER  0
 
 #define SUCCESS  0
 #define FAILURE -1
@@ -19,6 +18,7 @@
 #define TRACING 0
 #define NULL 0
 
+#define FLOATING_POINT 0
 #define C55X 0
 
 #define SAMPLES_PER_BLOCK       64

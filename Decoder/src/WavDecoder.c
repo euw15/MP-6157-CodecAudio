@@ -9,15 +9,6 @@
 #include "GeneralFlags.h"
 #include <stdio.h>
 
-//#if MSVC_COMPILER
-//#define PACKED
-//#pragma pack(push,1)
-//#endif
-
-//#if GCC_COMPILER
-//#define PACKED __attribute__ ((__packed__))
-//#endif
-
 //***************************************************************************
 //* Struct Name:    WavFile
 //*
@@ -39,16 +30,7 @@ struct WavFile
     uint16_t BitsPerSample;      // 8 bits, 16 bits, etc.
     uint32_t Subchunk2Id;        // Contains the letters "data"
     uint32_t Subchunk2Size;      // == NumSamples * NumChannels * BitsPerSample / 8, This is the number of bytes in the data.
-};// PACKED;
-
-//#if MSVC_COMPILER
-//#pragma pack(pop)
-//#undef PACKED
-//#endif
-
-//#if GCC_COMPILER
-//#undef PACKED
-//#endif
+};
 
 //***************************************************************************
 //* Function Name:  FormatUint32ForWrite

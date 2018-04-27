@@ -21,12 +21,6 @@
 
 #define C55X 0
 
-#if !C55X
-typedef int64_t LongReg;
-#else
-typedef long long LongReg;
-#endif
-
 #define SAMPLES_PER_BLOCK       64
 #define SAMPLES_PER_BLOCK_SQR   4096
 
